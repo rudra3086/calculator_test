@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { query } from '@/lib/db';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,16 +24,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Save calculation to database
-    const calculation = await prisma.calculation.create({
-      data: {
-        userId: user.userId,
-        expression,
-        result: result.toString(),
-      },
-    });
+    const calcId = uuidv4();
+    await query(
+      'INSERT INTO Calculation (id, userId, expression, result, createdAt) VALUES (?, ?, ?, ?, NOW())',
+      [calcId, user.userId, expression, result.toString()]
+    );
+
+    const calculations = await query(
+      'SELECT * FROM Calculation WHERE id = ?',
+      [calcId]
+    ) as Array<{id: string; userId: string; expression: string; result: string; createdAt: Date}>;
 
     return NextResponse.json(
-      { message: 'Calculation saved', calculation },
+      { message: 'Calculation saved', calculation: calculations[0] },
       { status: 201 }
     );
   } catch (error) {
@@ -56,11 +60,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's calculation history
-    const calculations = await prisma.calculation.findMany({
-      where: { userId: user.userId },
-      orderBy: { createdAt: 'desc' },
-      take: 10, // Last 10 calculations
-    });
+    const calculations = await query(
+      'SELECT * FROM Calculation WHERE userId = ? ORDER BY createdAt DESC LIMIT 10',
+      [user.userId]
+    ) as Array<{id: string; userId: string; expression: string; result: string; createdAt: Date}>;
 
     return NextResponse.json({ calculations }, { status: 200 });
   } catch (error) {

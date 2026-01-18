@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Calculation {
@@ -16,11 +16,7 @@ export default function CalculatorPage() {
   const [history, setHistory] = useState<Calculation[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const response = await fetch('/api/calculate');
       if (response.status === 401) {
@@ -32,7 +28,11 @@ export default function CalculatorPage() {
     } catch (error) {
       console.error('Failed to fetch history:', error);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const handleNumberClick = (num: string) => {
     if (display === '0') {
@@ -74,7 +74,7 @@ export default function CalculatorPage() {
       fetchHistory();
 
       setExpression(result.toString());
-    } catch (error) {
+    } catch {
       setDisplay('Error');
       setExpression('');
     }

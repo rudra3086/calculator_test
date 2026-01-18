@@ -33,7 +33,7 @@ export default function RegisterPage() {
       }
 
       router.push('/calculator');
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
       setLoading(false);
     }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/prisma';
+import { query } from '@/lib/db';
 import { generateToken } from '@/lib/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,11 +17,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUsers = await query(
+      'SELECT * FROM User WHERE email = ?',
+      [email]
+    ) as Array<{id: string; email: string}>;
 
-    if (existingUser) {
+    if (existingUsers.length > 0) {
       return NextResponse.json(
         { error: 'User already exists' },
         { status: 400 }
@@ -31,20 +33,18 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || null,
-      },
-    });
+    const userId = uuidv4();
+    await query(
+      'INSERT INTO User (id, email, password, name, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
+      [userId, email, hashedPassword, name || null]
+    );
 
     // Generate token
-    const token = generateToken({ userId: user.id, email: user.email });
+    const token = generateToken({ userId, email });
 
     // Set cookie
     const response = NextResponse.json(
-      { message: 'User created successfully', userId: user.id },
+      { message: 'User created successfully', userId },
       { status: 201 }
     );
 
