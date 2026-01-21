@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save calculation to database
+  
     const calcId = uuidv4();
     await query(
       'INSERT INTO Calculation (id, userId, expression, result, createdAt) VALUES (?, ?, ?, ?, NOW())',
@@ -59,7 +59,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user's calculation history
     const calculations = await query(
       'SELECT * FROM Calculation WHERE userId = ? ORDER BY createdAt DESC LIMIT 10',
       [user.userId]

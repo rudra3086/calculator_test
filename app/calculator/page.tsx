@@ -56,11 +56,10 @@ export default function CalculatorPage() {
 
   const handleEquals = async () => {
     try {
-      // Evaluate expression safely
       const result = eval(expression);
       setDisplay(result.toString());
 
-      // Save to database
+      
       await fetch('/api/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -70,7 +69,6 @@ export default function CalculatorPage() {
         }),
       });
 
-      // Refresh history
       fetchHistory();
 
       setExpression(result.toString());

@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password, name } = await request.json();
 
-    // Validate input
+    
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
+    
     const existingUsers = await query(
       'SELECT * FROM User WHERE email = ?',
       [email]
@@ -29,20 +29,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password
+    
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    
     const userId = uuidv4();
     await query(
       'INSERT INTO User (id, email, password, name, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
       [userId, email, hashedPassword, name || null]
     );
 
-    // Generate token
+    
     const token = generateToken({ userId, email });
 
-    // Set cookie
+    
     const response = NextResponse.json(
       { message: 'User created successfully', userId },
       { status: 201 }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7, 
     });
 
     return response;
